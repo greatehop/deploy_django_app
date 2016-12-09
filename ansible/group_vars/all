@@ -1,0 +1,15 @@
+---
+
+mysql_root_pass: "mysqlr00t"
+mysql_user: "mysql_user2"
+mysql_pass: "mysql_pass2"
+mysql_host: "localhost"
+mysql_db: "django2"
+
+django_user: "webapp2"
+django_repo: "https://github.com/kirpit/django-sample-app"
+django_project: "project2"
+django_app: "task2"
+django_venv: "venv"
+django_port: "8001"
+django_domain: "sample.example.com2"

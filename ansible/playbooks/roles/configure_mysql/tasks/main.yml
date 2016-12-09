@@ -1,0 +1,19 @@
+---
+
+- name: ensure mysql is running
+  service: name=mysql
+           state=started
+
+- name: create a new database
+  mysql_db: login_user=root
+            login_password={{ mysql_root_pass }}
+            name={{ mysql_db }}
+            state=present
+
+- name: add new user and grants
+  mysql_user: login_user=root
+              login_password={{ mysql_root_pass }}
+              name={{ mysql_user }}
+              password={{ mysql_pass }}
+              priv="*.*:ALL,GRANT"
+              state=present

@@ -1,0 +1,16 @@
+---
+
+- hosts: testvm
+  gather_facts: no
+#  sudo: yes
+  roles:
+    - install
+    - users
+    - configure_mysql
+    - configure_nginx
+    - configure_uwsgi
+    - configure_supervisor
+    - configure_webapp
+#    - role: configure_webapp
+#      sudo: yes
+#      sudo_user: webapp2

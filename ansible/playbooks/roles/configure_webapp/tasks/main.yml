@@ -1,0 +1,83 @@
+---
+
+- name: stat folder django_project
+  stat: path=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/
+  register: django_project_stat
+
+- name: clone django project
+  git: repo={{ django_repo }}
+       dest=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}
+       update=no
+       #clone=no
+  when:
+  - django_project_stat.stat.exists == False
+
+- name: replace postgres by mysql
+  lineinfile: dest=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/requirements.txt
+              regexp='^\s*?psycopg2'
+              line='MySQL-python'
+
+- name: create venv and install requirements
+  pip: requirements=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/requirements.txt
+       virtualenv=/home/{{ django_user }}/{{ django_domain }}/{{ django_venv }}
+
+- name: stat folder "projectname"
+  stat: path=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/projectname
+  register: projectname_stat
+
+- name: stat folder django_app
+  stat: path=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/{{ django_app }}
+  register: django_app_stat
+
+- name: rename django app folder
+  command: mv /home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/projectname
+           /home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/{{ django_app }}
+  when:
+  - projectname_stat.stat.exists == True
+  - django_app_stat.stat.exists == False
+
+- name: stat file "local.template.py"
+  stat: path=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/{{ django_app }}/settings/local.template.py
+  register: local_template_stat
+
+- name: rename django app settings file
+  command: mv /home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/{{ django_app }}/settings/local.template.py
+           /home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/{{ django_app }}/settings/local.py
+  when: local_template_stat.stat.exists
+
+- name: replace values in local.py
+  lineinfile: dest=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/{{ django_app }}/settings/local.py
+              regexp="{{ item.regexp }}"
+              line="{{ item.line }}"
+  with_items:
+    - { regexp : "        'ENGINE':.*?", line: "        'ENGINE': 'django.db.backends.mysql'," }
+    - { regexp : "        'NAME':.*?", line: "        'NAME': '{{ mysql_db }}'," }
+    - { regexp : "        'USER':.*?", line: "        'USER': '{{ mysql_user }}'," }
+    - { regexp : "        'PASSWORD':.*?", line: "        'PASSWORD': '{{ mysql_pass }}'," }
+    - { regexp : "        'HOST':.*?", line: "        'HOST': '{{ mysql_host }}'," }
+
+- name: replace values in urls.py
+  lineinfile: dest=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/{{ django_app }}/urls.py
+              regexp='^from projectname(.*)$'
+              line='from {{ django_app }}\1'
+              backrefs=yes
+
+- name: replace values in wsgi.py
+  lineinfile: dest=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/{{ django_app }}/wsgi.py
+              regexp="(.*)'\\{\\{ project_name \\}\\}"
+              line="\1'{{ django_app }}.settings'"
+              backrefs=yes
+
+- name: replace values in default.py
+  lineinfile: dest=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/{{ django_app }}/settings/default.py
+              regexp="{{ item.regexp }}"
+              line="{{ item.line }}"
+  with_items:
+    - { regexp : "SECRET_KEY = ", line : "SECRET_KEY = 'TODO: fix me'" }
+    - { regexp : "ROOT_URLCONF = ", line: "ROOT_URLCONF = '{{ django_app }}.urls'" }
+    - { regexp : "WSGI_APPLICATION = ", line: "WSGI_APPLICATION = '{{ django_app }}.wsgi.application'" }
+    - { regexp : "    '\\{\\{ project_name \\}\\}", line: "    '{{ django_app }}.home'," }
+
+- name: create db schema
+  shell: "/home/{{ django_user }}/{{ django_domain }}/{{ django_venv }}/bin/python
+          /home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/{{ django_app }}/manage.py migrate"

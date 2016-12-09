@@ -1,0 +1,15 @@
+---
+
+- name: ensure supervisord is running
+  service: name=supervisor
+           state=started
+
+- name: generate config
+  template: src=supervisor.conf
+            dest=/etc/supervisor/conf.d/{{ django_project }}.conf
+            mode=0644
+            owner=root
+            group=root
+
+- name: reload config
+  command: supervisorctl update

@@ -1,0 +1,45 @@
+---
+
+#- name: set MySQL root password before installing
+#  debconf: name="mysql-server"
+#           question="mysql-server/root_password"
+#           value="{{ mysql_root_pass | quote }}"
+#           vtype="password"
+
+#- name: confirm MySQL root password before installing
+#  debconf: name="mysql-server"
+#           question="mysql-server/root_password_again"
+#           value="{{ mysql_root_pass | quote }}"
+#           vtype="password"
+
+- name: set mysql root password before installation
+  shell: debconf-set-selections <<< 'mysql-server mysql-server/root_password password {{ mysql_root_pass }}'
+
+- name: confirm mysql root password before installation
+  shell: debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password {{ mysql_root_pass }}''
+
+- name: install requirements
+  apt: name={{item}}
+       state=installed
+       update_cache=yes
+       force=yes
+  with_items:
+  - mc
+  - screen
+  - wget
+  - curl
+  - vim
+  - git
+  - nginx
+  - uwsgi
+  - uwsgi-plugin-python
+  - supervisor
+  - mysql-server
+  - libmysqlclient-dev
+  - mysql-client
+  - python-mysqldb
+  - python-dev
+  - python-virtualenv
+
+- name: install latest pip
+  apt: name=python-pip state=latest

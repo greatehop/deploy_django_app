@@ -1,0 +1,22 @@
+---
+
+- name: generate uwsgi config
+  template: src=uwsgi.ini
+            dest=/home/{{ django_user }}/{{ django_domain }}/uwsgi.ini
+            mode=0644
+            owner={{ django_user }}
+            group={{ django_user }}
+
+- name: create uwsgi.log file
+  file: path=/home/{{ django_user }}/{{ django_domain }}/logs/uwsgi.log
+        owner={{ django_user }}
+        group={{ django_user }}
+        mode=0644
+        state=touch
+
+- name: create uwsgi_error.log file
+  file: path=/home/{{ django_user }}/{{ django_domain }}/logs/uwsgi_error.log
+        owner={{ django_user }}
+        group={{ django_user }}
+        mode=0644
+        state=touch

@@ -1,0 +1,6 @@
+---
+
+- name: create user
+  user: name={{ django_user }}
+        append=yes
+        shell=/bin/bash

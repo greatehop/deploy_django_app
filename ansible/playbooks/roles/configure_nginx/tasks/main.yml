@@ -1,0 +1,27 @@
+---
+
+- name: ensure nginx is running
+  service: name=nginx
+           state=started
+
+- name: create directories
+  file: path=/home/{{ django_user }}/{{ django_domain }}/logs
+        state=directory
+        owner={{ django_user }}
+        group={{ django_user }}
+        mode=0775
+        recurse=yes
+
+- name: generate nginx config
+  template: src=nginx.conf
+            dest=/etc/nginx/sites-available/{{ django_domain }}.conf
+            mode=0644
+            owner=root
+            group=root
+
+- name: create symlink for new domain
+  file: src=/etc/nginx/sites-available/{{ django_domain }}.conf
+        dest=/etc/nginx/sites-enabled/{{ django_domain }}.conf
+        state=link
+  notify:
+  - restart nginx
