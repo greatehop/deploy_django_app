@@ -1,5 +1,0 @@
-[testvm]
-127.0.0.1:2222
-#ansible_user=vagrant
-#ansible_ssh_private_key_file=/home/hop/projects/id_rsa
-#ansible_ssh_host=

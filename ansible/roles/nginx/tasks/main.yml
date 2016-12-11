@@ -19,9 +19,7 @@
             owner=root
             group=root
 
-- name: create symlink for new domain
+- name: enable new domain in nginx
   file: src=/etc/nginx/sites-available/{{ django_domain }}.conf
         dest=/etc/nginx/sites-enabled/{{ django_domain }}.conf
         state=link
-  notify:
-  - restart nginx

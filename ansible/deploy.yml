@@ -1,0 +1,17 @@
+---
+
+- hosts: all
+  gather_facts: no
+  become: yes
+  remote_user: vagrant
+  vars_files:
+   - vars/all.yml
+  roles:
+    - install
+    - users
+    - mysql
+    - nginx
+    - uwsgi
+    - supervisor
+    - role: django
+      become_user: webapp

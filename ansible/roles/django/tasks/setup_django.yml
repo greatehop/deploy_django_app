@@ -1,26 +1,5 @@
 ---
 
-- name: stat folder django_project
-  stat: path=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/
-  register: django_project_stat
-
-- name: clone django project
-  git: repo={{ django_repo }}
-       dest=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}
-       update=no
-       #clone=no
-  when:
-  - django_project_stat.stat.exists == False
-
-- name: replace postgres by mysql
-  lineinfile: dest=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/requirements.txt
-              regexp='^\s*?psycopg2'
-              line='MySQL-python'
-
-- name: create venv and install requirements
-  pip: requirements=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/requirements.txt
-       virtualenv=/home/{{ django_user }}/{{ django_domain }}/{{ django_venv }}
-
 - name: stat folder "projectname"
   stat: path=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/projectname
   register: projectname_stat
@@ -68,16 +47,30 @@
               line="\1'{{ django_app }}.settings'"
               backrefs=yes
 
+- name: generate secret_key
+  shell: date | md5sum
+  register: secret_key
+
 - name: replace values in default.py
   lineinfile: dest=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/{{ django_app }}/settings/default.py
               regexp="{{ item.regexp }}"
               line="{{ item.line }}"
+              state="present"
   with_items:
-    - { regexp : "SECRET_KEY = ", line : "SECRET_KEY = 'TODO: fix me'" }
+    - { regexp : "SECRET_KEY = ", line : "SECRET_KEY = '{{ secret_key.stdout }}'" }
     - { regexp : "ROOT_URLCONF = ", line: "ROOT_URLCONF = '{{ django_app }}.urls'" }
     - { regexp : "WSGI_APPLICATION = ", line: "WSGI_APPLICATION = '{{ django_app }}.wsgi.application'" }
-    - { regexp : "    '\\{\\{ project_name \\}\\}", line: "    '{{ django_app }}.home'," }
+#    - { regexp : "    '\\{\\{ project_name \\}\\}", line: "    '{{ django_app }}.home'," }
+
+- name: replace values in default.py
+  lineinfile: dest=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/{{ django_app }}/settings/default.py
+              regexp="(.*)'\\{\\{ project_name \\}\\}"
+              line="\1'{{ django_app }}.home',"
+              backrefs=yes
 
 - name: create db schema
   shell: "/home/{{ django_user }}/{{ django_domain }}/{{ django_venv }}/bin/python
           /home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/{{ django_app }}/manage.py migrate"
+  notify:
+  - restart nginx
+  - restart supervisor

@@ -1,0 +1,5 @@
+---
+
+- include: setup_venv.yml
+
+- include: setup_django.yml

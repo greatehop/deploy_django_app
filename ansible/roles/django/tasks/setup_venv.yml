@@ -1,0 +1,21 @@
+---
+
+- name: stat folder django_project
+  stat: path=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/
+  register: django_project_stat
+
+- name: clone django project
+  git: repo={{ django_repo }}
+       dest=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}
+       update=no
+  when:
+  - django_project_stat.stat.exists == False
+
+- name: change requirements (postgres to mysql)
+  replace: dest=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/requirements.txt
+           regexp='^\s*?psycopg2.*?$'
+           replace='MySQL-python'
+
+- name: create venv and install requirements
+  pip: requirements=/home/{{ django_user }}/{{ django_domain }}/{{ django_project }}/requirements.txt
+       virtualenv=/home/{{ django_user }}/{{ django_domain }}/{{ django_venv }}
