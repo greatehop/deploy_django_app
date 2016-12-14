@@ -14,4 +14,4 @@
     - uwsgi
     - supervisor
     - role: django
-      become_user: webapp
+      become_user: "{{ django_user }}"
