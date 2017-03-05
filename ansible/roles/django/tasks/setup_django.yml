@@ -74,3 +74,6 @@
   notify:
   - restart nginx
   - restart supervisor
+
+- name: show link
+  debug: msg="http://{{ django_domain }}"
